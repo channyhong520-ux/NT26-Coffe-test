@@ -1,0 +1,43 @@
+@import "tailwindcss";
+
+:root {
+  --teal: #148c78;
+  --teal-dark: #0f6f61;
+  --teal-light: #d9f1ea;
+  --mint: #e6f4ef;
+  --cream: #f6f9f7;
+}
+
+html, body, #root {
+  height: 100%;
+  margin: 0;
+  font-family: "Kantumruy Pro", "Inter", system-ui, sans-serif;
+  background: #eef2f1;
+  -webkit-font-smoothing: antialiased;
+}
+
+* { box-sizing: border-box; }
+
+/* Custom scrollbar for the mobile frame */
+.no-scrollbar::-webkit-scrollbar { display: none; }
+.no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+
+/* Wave / brush background used behind hero */
+.hero-brush {
+  background:
+    radial-gradient(circle at 20% 30%, rgba(255,255,255,0.35), transparent 40%),
+    radial-gradient(circle at 80% 60%, rgba(255,255,255,0.25), transparent 45%),
+    linear-gradient(160deg, #b8bfb8 0%, #8f978f 100%);
+}
+
+.dashed-line {
+  background-image: linear-gradient(to right, #cbd5d1 50%, transparent 50%);
+  background-size: 10px 2px;
+  background-repeat: repeat-x;
+  background-position: center;
+}
+
+/* subtle card shadow */
+.card-shadow { box-shadow: 0 8px 24px rgba(20, 140, 120, 0.08), 0 2px 4px rgba(0,0,0,0.04); }
+
+button { cursor: pointer; }

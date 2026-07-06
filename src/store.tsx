@@ -1,0 +1,166 @@
+import { createContext, useContext, useEffect, useMemo, useState, type ReactNode } from "react";
+import { products, type Product } from "./data";
+import { initTelegram, tgUserDisplayName, type TgUser } from "./telegramWebApp";
+
+export type CartItem = {
+  key: string;
+  product: Product;
+  qty: number;
+  options: string[]; // labels
+  optionsPrice: number;
+  note?: string;
+};
+
+type Ctx = {
+  cart: CartItem[];
+  addToCart: (item: CartItem) => void;
+  updateQty: (key: string, delta: number) => void;
+  removeItem: (key: string) => void;
+  clearCart: () => void;
+  totalItems: number;
+  totalPrice: number;
+  customerName: string;
+  setCustomerName: (v: string) => void;
+  customerPhone: string;
+  setCustomerPhone: (v: string) => void;
+  points: number;
+  addPoints: (n: number) => void;
+  tgUser: TgUser | null;
+  isFromTelegram: boolean;
+  isLoggedIn: boolean;
+  login: (data: { name: string; phone: string }) => void;
+  logout: () => void;
+};
+
+type StoredUser = { name: string; phone: string };
+function loadStoredUser(): StoredUser | null {
+  try {
+    const raw = localStorage.getItem("nt26.user");
+    if (!raw) return null;
+    const parsed = JSON.parse(raw);
+    if (parsed && typeof parsed.name === "string" && typeof parsed.phone === "string") {
+      return parsed;
+    }
+  } catch {
+    /* ignore */
+  }
+  return null;
+}
+
+const CartCtx = createContext<Ctx | null>(null);
+
+export function CartProvider({ children }: { children: ReactNode }) {
+  const [cart, setCart] = useState<CartItem[]>([]);
+  // Initialize name/phone from Telegram synchronously (before first paint).
+  const initialTgUser = useMemo(() => initTelegram(), []);
+  const stored = useMemo(() => loadStoredUser(), []);
+  const [tgUser] = useState<TgUser | null>(initialTgUser);
+  const [customerName, setCustomerName] = useState(
+    stored?.name ||
+      (initialTgUser ? tgUserDisplayName(initialTgUser).toUpperCase() : "USER")
+  );
+  const [customerPhone, setCustomerPhone] = useState(stored?.phone || "");
+  const [points, setPoints] = useState(0);
+  const [isLoggedIn, setIsLoggedIn] = useState<boolean>(!!stored);
+
+  const login = (data: { name: string; phone: string }) => {
+    setCustomerName(data.name);
+    setCustomerPhone(data.phone);
+    setIsLoggedIn(true);
+  };
+  const logout = () => {
+    localStorage.removeItem("nt26.user");
+    setIsLoggedIn(false);
+    setCustomerPhone("");
+  };
+
+  // If Telegram becomes available slightly after mount (script race), pick it up.
+  useEffect(() => {
+    if (tgUser) return;
+    const tryAttach = () => {
+      const u = initTelegram();
+      if (u) {
+        setCustomerName(tgUserDisplayName(u).toUpperCase());
+      }
+    };
+    // Try shortly after script loads.
+    const t1 = setTimeout(tryAttach, 200);
+    const t2 = setTimeout(tryAttach, 1000);
+    return () => {
+      clearTimeout(t1);
+      clearTimeout(t2);
+    };
+  }, [tgUser]);
+
+  const addToCart = (item: CartItem) => {
+    setCart((prev) => {
+      const existing = prev.find((p) => p.key === item.key);
+      if (existing) {
+        return prev.map((p) => (p.key === item.key ? { ...p, qty: p.qty + item.qty } : p));
+      }
+      return [...prev, item];
+    });
+  };
+
+  const updateQty = (key: string, delta: number) =>
+    setCart((prev) =>
+      prev
+        .map((p) => (p.key === key ? { ...p, qty: Math.max(0, p.qty + delta) } : p))
+        .filter((p) => p.qty > 0)
+    );
+
+  const removeItem = (key: string) => setCart((prev) => prev.filter((p) => p.key !== key));
+  const clearCart = () => setCart([]);
+
+  const { totalItems, totalPrice } = useMemo(() => {
+    let items = 0;
+    let price = 0;
+    cart.forEach((c) => {
+      items += c.qty;
+      price += c.qty * (c.product.price + c.optionsPrice);
+    });
+    return { totalItems: items, totalPrice: price };
+  }, [cart]);
+
+  const addPoints = (n: number) => setPoints((p) => p + n);
+
+  return (
+    <CartCtx.Provider
+      value={{
+        cart,
+        addToCart,
+        updateQty,
+        removeItem,
+        clearCart,
+        totalItems,
+        totalPrice,
+        customerName,
+        setCustomerName,
+        customerPhone,
+        setCustomerPhone,
+        points,
+        addPoints,
+        tgUser,
+        isFromTelegram: !!tgUser,
+        isLoggedIn,
+        login,
+        logout,
+      }}
+    >
+      {children}
+    </CartCtx.Provider>
+  );
+}
+
+export const useCart = () => {
+  const ctx = useContext(CartCtx);
+  if (!ctx) throw new Error("useCart must be used inside CartProvider");
+  return ctx;
+};
+
+// Helper: featured 3 products for home
+export const featuredProducts = [
+  products.find((p) => p.id === "p1")!,
+  products.find((p) => p.id === "p5")!,
+  products.find((p) => p.id === "p9")!,
+];
