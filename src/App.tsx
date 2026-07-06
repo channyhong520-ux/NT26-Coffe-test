@@ -89,7 +89,7 @@ function AppInner() {
       {screen.name === "checkout" && (
         <Checkout
           onBack={back}
-          onSubmit={({ method, note }) => {
+          onSubmit={({ method, note, location, distance }) => {
             const order: OrderPayload = {
               invoice: generateInvoice(),
               customerName,
@@ -100,6 +100,8 @@ function AppInner() {
               note,
               createdAt: new Date(),
               tgUser,
+              deliveryLocation: location,
+              distanceMeters: distance,
             };
             addPoints(1);
             // Fire-and-forget: persist order to Neon Postgres.
@@ -117,6 +119,9 @@ function AppInner() {
                 options: it.options,
               })),
               note: order.note,
+              deliveryLat: order.deliveryLocation?.latitude ?? null,
+              deliveryLng: order.deliveryLocation?.longitude ?? null,
+              distanceM: order.distanceMeters ?? null,
             });
             // NOTE: don't clear cart yet — ThankYou needs items to render the
             // receipt. We snapshotted them into `order` already, but keeping

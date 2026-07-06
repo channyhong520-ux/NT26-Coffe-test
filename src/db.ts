@@ -45,9 +45,16 @@ function ensureSchema(): Promise<void> {
         total INTEGER NOT NULL,
         items JSONB NOT NULL,
         note TEXT,
+        delivery_lat DOUBLE PRECISION,
+        delivery_lng DOUBLE PRECISION,
+        distance_m DOUBLE PRECISION,
         created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
       )
     `;
+    // Add columns if the table already exists from a previous version.
+    await sql`ALTER TABLE orders ADD COLUMN IF NOT EXISTS delivery_lat DOUBLE PRECISION`;
+    await sql`ALTER TABLE orders ADD COLUMN IF NOT EXISTS delivery_lng DOUBLE PRECISION`;
+    await sql`ALTER TABLE orders ADD COLUMN IF NOT EXISTS distance_m DOUBLE PRECISION`;
   })();
   return schemaReady;
 }
@@ -84,12 +91,26 @@ export async function saveOrder(order: {
   total: number;
   items: unknown;
   note?: string;
+  deliveryLat?: number | null;
+  deliveryLng?: number | null;
+  distanceM?: number | null;
 }): Promise<void> {
   try {
     await ensureSchema();
     await sql`
-      INSERT INTO orders (invoice, user_phone, user_name, method, total, items, note)
-      VALUES (${order.invoice}, ${order.userPhone}, ${order.userName}, ${order.method}, ${order.total}, ${JSON.stringify(order.items)}::jsonb, ${order.note ?? null})
+      INSERT INTO orders (invoice, user_phone, user_name, method, total, items, note, delivery_lat, delivery_lng, distance_m)
+      VALUES (
+        ${order.invoice},
+        ${order.userPhone},
+        ${order.userName},
+        ${order.method},
+        ${order.total},
+        ${JSON.stringify(order.items)}::jsonb,
+        ${order.note ?? null},
+        ${order.deliveryLat ?? null},
+        ${order.deliveryLng ?? null},
+        ${order.distanceM ?? null}
+      )
     `;
   } catch (e) {
     console.error("saveOrder failed", e);

@@ -1,8 +1,23 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useCart } from "../store";
 import { formatPrice } from "../data";
 import { StepBar } from "../components/Layout";
 import { IconArrowLeft, IconArrowRight, IconBag, IconCheck, IconClock } from "../components/Icons";
+import {
+  distanceMeters,
+  formatDistance,
+  requestLocation,
+  type TgLocation,
+} from "../telegramWebApp";
+
+const SHOP_LOCATION = { latitude: 11.528618, longitude: 104.941755 };
+
+type LocState =
+  | { kind: "idle" }
+  | { kind: "requesting" }
+  | { kind: "ok"; loc: TgLocation; distance: number }
+  | { kind: "denied" }
+  | { kind: "error"; message: string };
 
 export default function Checkout({
   onBack,
@@ -10,7 +25,12 @@ export default function Checkout({
   onEditProfile,
 }: {
   onBack: () => void;
-  onSubmit: (data: { method: "pickup" | "delivery"; note: string }) => void;
+  onSubmit: (data: {
+    method: "pickup" | "delivery";
+    note: string;
+    location: TgLocation | null;
+    distance: number | null;
+  }) => void;
   onEditProfile: () => void;
 }) {
   const { totalPrice, customerName, customerPhone, points } = useCart();
@@ -19,6 +39,34 @@ export default function Checkout({
   const [duration, setDuration] = useState<string>("normal");
   const [invoice, setInvoice] = useState("");
   const [note, setNote] = useState("");
+  const [loc, setLoc] = useState<LocState>({ kind: "idle" });
+
+  const fetchLocation = () => {
+    setLoc({ kind: "requesting" });
+    requestLocation()
+      .then((l) => {
+        setLoc({
+          kind: "ok",
+          loc: l,
+          distance: distanceMeters(l, SHOP_LOCATION),
+        });
+      })
+      .catch((err) => {
+        const msg = String(err?.message || err || "");
+        if (msg.toLowerCase().includes("denied") || err?.code === 1) {
+          setLoc({ kind: "denied" });
+        } else {
+          setLoc({ kind: "error", message: msg || "មិនអាចទទួលទីតាំង" });
+        }
+      });
+  };
+
+  // Auto-request location the first time the user picks delivery.
+  useEffect(() => {
+    if (method === "delivery" && loc.kind === "idle") {
+      fetchLocation();
+    }
+  }, [method, loc.kind]);
 
   return (
     <div className="flex flex-col h-full bg-[#f2f7f5]">
@@ -62,6 +110,85 @@ export default function Checkout({
             <div className="text-sm font-medium text-gray-700">ដឹកជញ្ជូនដល់ទីតាំង</div>
           </button>
         </div>
+
+        {/* Delivery location panel — shown only for delivery */}
+        {method === "delivery" && (
+          <div className="mt-3 bg-white rounded-2xl p-3 card-shadow">
+            <div className="flex items-center justify-between">
+              <div className="text-[#148c78] font-semibold text-sm flex items-center gap-1">
+                📍 ទីតាំងដឹកជញ្ជូន
+              </div>
+              {loc.kind === "ok" && (
+                <span className="text-xs text-gray-500">
+                  {formatDistance(loc.distance)} ពីហាង
+                </span>
+              )}
+            </div>
+
+            {loc.kind === "requesting" && (
+              <div className="mt-2 flex items-center gap-2 text-xs text-gray-600">
+                <span className="w-2 h-2 bg-[#148c78] rounded-full animate-pulse" />
+                កំពុងស្នើសុំទីតាំង...
+              </div>
+            )}
+
+            {loc.kind === "ok" && (
+              <>
+                <div className="mt-2 text-[11px] text-gray-600 font-mono">
+                  {loc.loc.latitude.toFixed(6)}, {loc.loc.longitude.toFixed(6)}
+                </div>
+                <div className="mt-2 flex items-center gap-2">
+                  <a
+                    href={`https://maps.google.com/?q=${loc.loc.latitude},${loc.loc.longitude}`}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="text-[11px] text-[#148c78] underline"
+                  >
+                    មើលក្នុងផែនទី
+                  </a>
+                  <button
+                    onClick={fetchLocation}
+                    className="text-[11px] text-gray-500 underline ml-auto"
+                  >
+                    ស្វែងរកម្ដងទៀត
+                  </button>
+                </div>
+                <div className="mt-2 inline-flex items-center gap-1 bg-green-50 text-green-700 text-[11px] px-2 py-1 rounded-full">
+                  <IconCheck className="w-3 h-3" />
+                  ទីតាំងនឹងត្រូវផ្ញើទៅ Telegram ស្វ័យប្រវត្តិ
+                </div>
+              </>
+            )}
+
+            {loc.kind === "denied" && (
+              <>
+                <div className="mt-2 text-[11px] text-amber-700 bg-amber-50 border border-amber-200 rounded-lg px-3 py-2">
+                  ⚠️ ការចូលដំណើរការទីតាំងត្រូវបានបដិសេធ។ សូមអនុញ្ញាតដើម្បីបញ្ជាទិញដឹកជញ្ជូន។
+                </div>
+                <button
+                  onClick={fetchLocation}
+                  className="mt-2 text-xs text-[#148c78] font-medium underline"
+                >
+                  ព្យាយាមម្ដងទៀត
+                </button>
+              </>
+            )}
+
+            {loc.kind === "error" && (
+              <>
+                <div className="mt-2 text-[11px] text-red-700 bg-red-50 border border-red-200 rounded-lg px-3 py-2">
+                  ⚠️ {loc.message}
+                </div>
+                <button
+                  onClick={fetchLocation}
+                  className="mt-2 text-xs text-[#148c78] font-medium underline"
+                >
+                  ព្យាយាមម្ដងទៀត
+                </button>
+              </>
+            )}
+          </div>
+        )}
 
         {/* Customer info */}
         <button
@@ -195,8 +322,18 @@ export default function Checkout({
               អនុលោម
             </button>
             <button
-              onClick={() => onSubmit({ method, note })}
-              disabled={!customerPhone}
+              onClick={() =>
+                onSubmit({
+                  method,
+                  note,
+                  location: loc.kind === "ok" ? loc.loc : null,
+                  distance: loc.kind === "ok" ? loc.distance : null,
+                })
+              }
+              disabled={
+                !customerPhone ||
+                (method === "delivery" && loc.kind !== "ok")
+              }
               className="bg-orange-400 hover:bg-orange-500 disabled:opacity-50 text-white rounded-full px-5 py-2.5 text-sm font-medium flex items-center gap-2"
             >
               <IconCheck className="w-4 h-4" />
@@ -207,6 +344,11 @@ export default function Checkout({
         {!customerPhone && (
           <div className="text-center text-[11px] text-red-500 mt-1 flex items-center justify-center gap-1">
             <IconBag className="w-3 h-3" /> សូមបញ្ចូលលេខទូរស័ព្ទដើម្បីបញ្ជាទិញ
+          </div>
+        )}
+        {customerPhone && method === "delivery" && loc.kind !== "ok" && (
+          <div className="text-center text-[11px] text-amber-600 mt-1 flex items-center justify-center gap-1">
+            📍 សូមអនុញ្ញាតទីតាំងសម្រាប់ការដឹកជញ្ជូន
           </div>
         )}
       </div>
