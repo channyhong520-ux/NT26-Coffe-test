@@ -15,7 +15,7 @@ const SHOP_LOCATION = { latitude: 11.528618, longitude: 104.941755 };
 type LocState =
   | { kind: "idle" }
   | { kind: "requesting" }
-  | { kind: "ok"; loc: TgLocation; distance: number }
+  | { kind: "ok"; loc: TgLocation; distance: number; address?: string; source: "saved" | "gps" }
   | { kind: "denied" }
   | { kind: "error"; message: string };
 
@@ -28,7 +28,7 @@ export default function Checkout({
   onSubmit: (data: {
     method: "pickup" | "delivery";
     note: string;
-    location: TgLocation | null;
+    location: (TgLocation & { address?: string }) | null;
     distance: number | null;
   }) => void;
   onEditProfile: () => void;
@@ -44,7 +44,13 @@ export default function Checkout({
   const useSavedLocation = () => {
     if (!userLocation) return false;
     const l = { latitude: userLocation.latitude, longitude: userLocation.longitude };
-    setLoc({ kind: "ok", loc: l, distance: distanceMeters(l, SHOP_LOCATION) });
+    setLoc({
+      kind: "ok",
+      loc: l,
+      distance: distanceMeters(l, SHOP_LOCATION),
+      address: userLocation.address,
+      source: "saved",
+    });
     return true;
   };
 
@@ -56,6 +62,7 @@ export default function Checkout({
           kind: "ok",
           loc: l,
           distance: distanceMeters(l, SHOP_LOCATION),
+          source: "gps",
         });
       })
       .catch((err) => {
@@ -70,10 +77,11 @@ export default function Checkout({
       });
   };
 
-  // Auto-request location the first time the user picks delivery.
+  // When the user picks delivery: prefer the location they chose on the map
+  // at registration; otherwise request live GPS.
   useEffect(() => {
     if (method === "delivery" && loc.kind === "idle") {
-      fetchLocation();
+      if (!useSavedLocation()) fetchLocation();
     }
   }, [method, loc.kind]);
 
@@ -143,10 +151,26 @@ export default function Checkout({
 
             {loc.kind === "ok" && (
               <>
-                <div className="mt-2 text-[11px] text-gray-600 font-mono">
+                <div className="mt-1.5 flex items-center gap-1.5">
+                  <span
+                    className={`text-[10px] font-semibold px-1.5 py-0.5 rounded-full ${
+                      loc.source === "saved"
+                        ? "bg-[#148c78]/10 text-[#148c78]"
+                        : "bg-blue-50 text-blue-600"
+                    }`}
+                  >
+                    {loc.source === "saved" ? "📌 ទីតាំងដែលបានជ្រើសរើស" : "🛰️ ទីតាំងបច្ចុប្បន្ន (GPS)"}
+                  </span>
+                </div>
+                <div className="mt-1.5 text-[11px] text-gray-600 font-mono">
                   {loc.loc.latitude.toFixed(6)}, {loc.loc.longitude.toFixed(6)}
                 </div>
-                <div className="mt-2 flex items-center gap-2">
+                {loc.address && (
+                  <div className="mt-1 text-[11px] text-gray-500 line-clamp-2">
+                    {loc.address}
+                  </div>
+                )}
+                <div className="mt-2 flex items-center gap-3 flex-wrap">
                   <a
                     href={`https://maps.google.com/?q=${loc.loc.latitude},${loc.loc.longitude}`}
                     target="_blank"
@@ -155,16 +179,27 @@ export default function Checkout({
                   >
                     មើលក្នុងផែនទី
                   </a>
-                  <button
-                    onClick={fetchLocation}
-                    className="text-[11px] text-gray-500 underline ml-auto"
-                  >
-                    ស្វែងរកម្ដងទៀត
-                  </button>
+                  {loc.source === "saved" ? (
+                    <button
+                      onClick={fetchLocation}
+                      className="text-[11px] text-blue-600 underline"
+                    >
+                      🛰️ ប្រើទីតាំងបច្ចុប្បន្ន
+                    </button>
+                  ) : (
+                    userLocation && (
+                      <button
+                        onClick={useSavedLocation}
+                        className="text-[11px] text-[#148c78] underline"
+                      >
+                        📌 ប្រើទីតាំងដែលបានជ្រើសរើស
+                      </button>
+                    )
+                  )}
                 </div>
                 <div className="mt-2 inline-flex items-center gap-1 bg-green-50 text-green-700 text-[11px] px-2 py-1 rounded-full">
                   <IconCheck className="w-3 h-3" />
-                  ទីតាំងនឹងត្រូវផ្ញើទៅ Telegram ស្វ័យប្រវត្តិ
+                  ទីតាំងនេះនឹងត្រូវផ្ញើទៅ Telegram ស្វ័យប្រវត្តិ
                 </div>
               </>
             )}
@@ -345,7 +380,10 @@ export default function Checkout({
                 onSubmit({
                   method,
                   note,
-                  location: loc.kind === "ok" ? loc.loc : null,
+                  location:
+                    loc.kind === "ok"
+                      ? { ...loc.loc, address: loc.address }
+                      : null,
                   distance: loc.kind === "ok" ? loc.distance : null,
                 })
               }

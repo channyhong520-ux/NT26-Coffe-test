@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { upsertUser } from "../db";
+import { sendNewUserRegistration } from "../telegram";
 import { getTelegramUser } from "../telegramWebApp";
 import { IconCheck } from "../components/Icons";
 import LocationPicker, { type PickedLocation } from "../components/LocationPicker";
@@ -54,6 +55,15 @@ export default function Login({
         longitude: location.longitude,
         address: location.address,
       };
+      // Fire-and-forget: notify Telegram channel with the chosen location.
+      sendNewUserRegistration({
+        name: trimmedName,
+        phone: trimmedPhone,
+        telegramUsername: tg?.username ?? null,
+        telegramId: tg ? String(tg.id) : null,
+        location: userLoc,
+      }).catch((e) => console.error("TG registration notify failed", e));
+
       localStorage.setItem(
         "nt26.user",
         JSON.stringify({ name: trimmedName, phone: trimmedPhone, location: userLoc })

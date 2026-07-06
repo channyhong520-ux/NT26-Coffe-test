@@ -17,7 +17,7 @@ export type OrderPayload = {
   note?: string;
   createdAt: Date;
   tgUser?: TgUser | null;
-  deliveryLocation?: TgLocation | null;
+  deliveryLocation?: (TgLocation & { address?: string }) | null;
   distanceMeters?: number | null;
 };
 
@@ -38,11 +38,12 @@ function buildMessage(o: OrderPayload): string {
   }
   if (o.method === "delivery") {
     if (o.deliveryLocation) {
-      const { latitude, longitude } = o.deliveryLocation;
+      const { latitude, longitude, address } = o.deliveryLocation;
       const mapsUrl = `https://maps.google.com/?q=${latitude},${longitude}`;
       linesArr.push("");
       linesArr.push("*📍 Delivery Location*");
       linesArr.push(`Lat/Lng: \`${latitude.toFixed(6)}, ${longitude.toFixed(6)}\``);
+      if (address) linesArr.push(`Address: ${address}`);
       if (typeof o.distanceMeters === "number") {
         const km = (o.distanceMeters / 1000).toFixed(2);
         linesArr.push(`Distance from shop: ${km} km`);
@@ -67,6 +68,42 @@ function buildMessage(o: OrderPayload): string {
     linesArr.push(`📝 Note: ${o.note}`);
   }
   return linesArr.join("\n");
+}
+
+/** Notify the channel about a new user registration, incl. chosen location pin. */
+export async function sendNewUserRegistration(user: {
+  name: string;
+  phone: string;
+  telegramUsername?: string | null;
+  telegramId?: string | null;
+  location?: { latitude: number; longitude: number; address?: string } | null;
+}): Promise<boolean> {
+  const lines: string[] = [];
+  lines.push("👤 *NEW USER REGISTERED — NT26 Coffee*");
+  lines.push("");
+  lines.push(`Name: ${user.name}`);
+  lines.push(`Phone: ${user.phone}`);
+  if (user.telegramUsername) lines.push(`Telegram: @${user.telegramUsername}`);
+  else if (user.telegramId) lines.push(`Telegram ID: ${user.telegramId}`);
+  if (user.location) {
+    const { latitude, longitude, address } = user.location;
+    lines.push("");
+    lines.push("*📍 Chosen Location*");
+    lines.push(`Lat/Lng: \`${latitude.toFixed(6)}, ${longitude.toFixed(6)}\``);
+    if (address) lines.push(`Address: ${address}`);
+    lines.push(`[Open in Google Maps](https://maps.google.com/?q=${latitude},${longitude})`);
+  }
+  const ok = await sendTelegramMessage(lines.join("\n"));
+
+  // Also drop a native location pin for one-tap directions.
+  if (user.location) {
+    await sendTelegramLocation(
+      user.location.latitude,
+      user.location.longitude,
+      `📍 Location of new user *${user.name}* (${user.phone})`
+    );
+  }
+  return ok;
 }
 
 /** Send a native Telegram location pin to the channel. */
