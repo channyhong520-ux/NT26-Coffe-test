@@ -21,23 +21,23 @@ export const categories: Category[] = [
   { id: "snack", nameKh: "អាហារសម្រន់" },
 ];
 
-// Using picsum + curated coffee/tea image ids for consistent visuals
-const img = (seed: string) => `https://picsum.photos/seed/${seed}/600/600`;
+// All products use the local "coming soon" placeholder image.
+import comingSoon from "./assets/coming-soon.jpg";
 
 export const products: Product[] = [
-  { id: "p1", nameKh: "តែក្រូចហាមទឹកដោះគោ", categoryId: "tea", price: 6000, image: img("teacup1"), tag: "Multiple Toppings" },
-  { id: "p2", nameKh: "តែបៃតងក្រូចឆ្មា", categoryId: "tea", price: 6000, image: img("greentea2"), tag: "Multiple Toppings" },
-  { id: "p3", nameKh: "តែម៉ាចាបៃតង", categoryId: "tea", price: 6500, image: img("matcha3"), tag: "Multiple Toppings" },
-  { id: "p4", nameKh: "តែថៃទឹកដោះគោ", categoryId: "tea", price: 6000, image: img("thaitea4"), tag: "Multiple Toppings" },
-  { id: "p5", nameKh: "កាហ្វេអេស្ព្រេសសូ", categoryId: "coffee", price: 6000, image: img("espresso5") },
-  { id: "p6", nameKh: "កាហ្វេឡាតេ", categoryId: "coffee", price: 6500, image: img("latte6") },
-  { id: "p7", nameKh: "កាហ្វេម៉ូកា", categoryId: "coffee", price: 7000, image: img("mocha7") },
-  { id: "p8", nameKh: "កាហ្វេអាមេរីកាណូ", categoryId: "coffee", price: 5500, image: img("americano8") },
-  { id: "p9", nameKh: "ប៉ិកក្រឡុកស្ត្របឺរី", categoryId: "ice", price: 7000, image: img("smoothie9") },
-  { id: "p10", nameKh: "ក្រឡុកម៉ង្គូតៅ", categoryId: "ice", price: 7000, image: img("mango10") },
-  { id: "p11", nameKh: "ក្រឡុកចេក ", categoryId: "ice", price: 6500, image: img("banana11") },
-  { id: "p12", nameKh: "ទឹកក្រូចឆ្មាត្រជាក់", categoryId: "juice", price: 5000, image: img("lemon12") },
-  { id: "p13", nameKh: "នំបុ័ងប៊ឺរខៀវ", categoryId: "snack", price: 4000, image: img("bread13") },
+  { id: "p1", nameKh: "តែក្រូចហាមទឹកដោះគោ", categoryId: "tea", price: 6000, image: comingSoon, tag: "Multiple Toppings" },
+  { id: "p2", nameKh: "តែបៃតងក្រូចឆ្មា", categoryId: "tea", price: 6000, image: comingSoon, tag: "Multiple Toppings" },
+  { id: "p3", nameKh: "តែម៉ាចាបៃតង", categoryId: "tea", price: 6500, image: comingSoon, tag: "Multiple Toppings" },
+  { id: "p4", nameKh: "តែថៃទឹកដោះគោ", categoryId: "tea", price: 6000, image: comingSoon, tag: "Multiple Toppings" },
+  { id: "p5", nameKh: "កាហ្វេអេស្ព្រេសសូ", categoryId: "coffee", price: 6000, image: comingSoon },
+  { id: "p6", nameKh: "កាហ្វេឡាតេ", categoryId: "coffee", price: 6500, image: comingSoon },
+  { id: "p7", nameKh: "កាហ្វេម៉ូកា", categoryId: "coffee", price: 7000, image: comingSoon },
+  { id: "p8", nameKh: "កាហ្វេអាមេរីកាណូ", categoryId: "coffee", price: 5500, image: comingSoon },
+  { id: "p9", nameKh: "ប៉ិកក្រឡុកស្ត្របឺរី", categoryId: "ice", price: 7000, image: comingSoon },
+  { id: "p10", nameKh: "ក្រឡុកម៉ង្គូតៅ", categoryId: "ice", price: 7000, image: comingSoon },
+  { id: "p11", nameKh: "ក្រឡុកចេក ", categoryId: "ice", price: 6500, image: comingSoon },
+  { id: "p12", nameKh: "ទឹកក្រូចឆ្មាត្រជាក់", categoryId: "juice", price: 5000, image: comingSoon },
+  { id: "p13", nameKh: "នំបុ័ងប៊ឺរខៀវ", categoryId: "snack", price: 4000, image: comingSoon },
 ];
 
 export type Option = { id: string; label: string; price: number };

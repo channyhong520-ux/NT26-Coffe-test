@@ -6,7 +6,6 @@ import { IconArrowLeft, IconCheck } from "../components/Icons";
 import { submitOrder, type OrderPayload } from "../telegram";
 
 type SendState = "idle" | "sending" | "sent" | "error";
-type UserCopyState = "na" | "sent" | "failed";
 
 export default function ThankYou({
   order,
@@ -17,7 +16,6 @@ export default function ThankYou({
 }) {
   const receiptRef = useRef<HTMLDivElement>(null);
   const [sendState, setSendState] = useState<SendState>("idle");
-  const [userCopy, setUserCopy] = useState<UserCopyState>("na");
   const [receiptUrl, setReceiptUrl] = useState<string | null>(null);
   const submittedRef = useRef(false);
 
@@ -44,11 +42,8 @@ export default function ThankYou({
             console.warn("Receipt capture failed", e);
           }
         }
-        const result = await submitOrder(order, dataUrl);
-        setSendState(result.shopSent ? "sent" : "error");
-        if (order.tgUser?.id) {
-          setUserCopy(result.userSent ? "sent" : "failed");
-        }
+        const ok = await submitOrder(order, dataUrl);
+        setSendState(ok ? "sent" : "error");
       } catch (e) {
         console.error(e);
         setSendState("error");
@@ -131,21 +126,6 @@ export default function ThankYou({
           {sendState === "error" && (
             <div className="inline-flex items-center gap-2 bg-red-50 text-red-700 text-xs px-3 py-1.5 rounded-full">
               ⚠️ ការផ្ញើទៅ Telegram បរាជ័យ
-            </div>
-          )}
-
-          {/* Receipt copy sent to the customer's own Telegram */}
-          {userCopy === "sent" && (
-            <div className="mt-1.5 inline-flex items-center gap-2 bg-[#26A5E4]/10 text-[#26A5E4] text-xs px-3 py-1.5 rounded-full">
-              <svg viewBox="0 0 24 24" fill="currentColor" className="w-3 h-3">
-                <path d="m21.5 4.5-19 8 6 2 2 6 4-4 5 4z" />
-              </svg>
-              វិក័យប័ត្របានផ្ញើទៅ Telegram របស់អ្នក
-            </div>
-          )}
-          {userCopy === "failed" && (
-            <div className="mt-1.5 inline-flex items-center gap-2 bg-amber-50 text-amber-700 text-xs px-3 py-1.5 rounded-full">
-              ⚠️ មិនអាចផ្ញើវិក័យប័ត្រទៅ Telegram របស់អ្នក — សូមចុច Start លើ Bot ជាមុនសិន
             </div>
           )}
         </div>
