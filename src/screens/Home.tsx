@@ -86,7 +86,7 @@ export default function Home({
           </div>
           <div className="flex items-center gap-1 opacity-90">
             <div className="w-6 h-6 rounded-full bg-[#1877F2] flex items-center justify-center text-[10px] font-bold">f</div>
-            <span>ហាងកាហ្វេ</span>
+            <span>COFFEE NT26</span>
           </div>
         </div>
       </div>
