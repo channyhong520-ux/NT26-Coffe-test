@@ -174,7 +174,7 @@ export default function Home({
                 ៛ {(0).toLocaleString()}
               </div>
               <div className="absolute inset-0 flex items-center justify-start pl-3 text-xs text-gray-600 font-medium">
-                សរុបលុយសរុប
+                ​
               </div>
             </div>
           </div>
