@@ -28,19 +28,49 @@ export default function Home({
       <div className="relative hero-brush">
         {/* top bar */}
         <div className="flex items-center justify-end gap-2 px-4 pt-4 pb-2">
+        {/* Shop Selector Button */}
           <button
             onClick={() => setShowShopPopup(true)}
-            className="bg-white rounded-full pl-3 pr-2 py-1 flex items-center gap-1 text-sm font-medium text-gray-700 shadow"
+            className="bg-white rounded-full pl-3 pr-2 py-1 flex items-center gap-1 text-sm font-medium text-gray-700 shadow transition-transform hover:scale-105 active:scale-95"
           >
             NT26 Coffee
             <IconChevronDown className="w-4 h-4" />
           </button>
-          <a className="w-8 h-8 rounded-full bg-[#1877F2] flex items-center justify-center text-white text-xs font-bold">f</a>
-          <a className="w-8 h-8 rounded-full bg-[#26A5E4] flex items-center justify-center text-white">
-            <svg viewBox="0 0 24 24" fill="currentColor" className="w-4 h-4"><path d="m21.5 4.5-19 8 6 2 2 6 4-4 5 4z" /></svg>
+
+          {/* Facebook */}
+          <a 
+            href="#" 
+            target="_blank" 
+            rel="noopener noreferrer" 
+            className="w-8 h-8 rounded-full bg-[#1877F2] flex items-center justify-center text-white transition-transform hover:scale-110"
+          >
+            <svg viewBox="0 0 24 24" fill="currentColor" className="w-4 h-4">
+              <path d="M22 12c0-5.52-4.48-10-10-10S2 6.48 2 12c0 4.84 3.44 8.87 8 9.8V15H8v-3h2V9.5C10 7.57 11.57 6 13.5 6H16v3h-2c-.55 0-1 .45-1 1v2h3v3h-3v6.95c4.56-.93 8-4.96 8-9.75z"/>
+            </svg>
           </a>
-          <a className="w-8 h-8 rounded-full bg-gradient-to-br from-orange-400 to-red-500 flex items-center justify-center text-white">
-            <svg viewBox="0 0 24 24" fill="currentColor" className="w-4 h-4"><path d="M3 21 8 6l4 8 3-4 6 11Z" /></svg>
+
+          {/* Telegram */}
+          <a 
+            href="#" 
+            target="_blank" 
+            rel="noopener noreferrer" 
+            className="w-8 h-8 rounded-full bg-[#26A5E4] flex items-center justify-center text-white transition-transform hover:scale-110"
+          >
+            <svg viewBox="0 0 24 24" fill="currentColor" className="w-4 h-4">
+              <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm4.64 6.8c-.15 1.58-.8 5.42-1.13 7.19-.14.75-.42 1-.68 1.03-.58.05-1.02-.38-1.58-.75-.88-.58-1.38-.94-2.23-1.5-.99-.65-.35-1.01.22-1.59.15-.15 2.71-2.48 2.76-2.69.01-.03.01-.14-.07-.2-.08-.06-.19-.04-.27-.02-.12.02-1.96 1.25-5.54 3.66-.52.36-1 .53-1.42.52-.47-.01-1.37-.26-2.03-.48-.82-.27-1.47-.42-1.42-.88.03-.24.35-.49.96-.74 3.78-1.65 6.31-2.74 7.58-3.27 3.61-1.51 4.36-1.77 4.85-1.78.11 0 .35.03.5.16.13.12.17.29.18.41 0 .07.01.23 0 .32z"/>
+            </svg>
+          </a>
+
+          {/* TikTok */}
+          <a 
+            href="#" 
+            target="_blank" 
+            rel="noopener noreferrer" 
+            className="w-8 h-8 rounded-full bg-black flex items-center justify-center text-white transition-transform hover:scale-110"
+          >
+            <svg viewBox="0 0 24 24" fill="currentColor" className="w-4 h-4">
+              <path d="M12.53.02C13.84 0 15.14.01 16.44 0c.08 1.53.63 3.09 1.75 4.17 1.12 1.11 2.7 1.62 4.24 1.79v4.03c-1.44-.06-2.89-.52-4.06-1.39v7.4c0 1.27-.33 2.58-1.02 3.65-1.52 2.41-4.47 3.61-7.24 3.11-2.95-.5-5.32-2.92-5.74-5.88-.56-3.48 1.72-6.91 5.17-7.39.43-.06.87-.1 1.31-.08v4.04c-.32-.02-.65 0-.96.06-1.39.26-2.41 1.62-2.22 3.01.23 1.54 1.69 2.65 3.23 2.4 1.3-.17 2.27-1.28 2.24-2.58V0h.17z"/>
+            </svg>
           </a>
         </div>
 
