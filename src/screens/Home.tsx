@@ -82,7 +82,7 @@ export default function Home({
             <div className="w-6 h-6 rounded-full bg-[#26A5E4] flex items-center justify-center">
               <svg viewBox="0 0 24 24" fill="currentColor" className="w-3 h-3"><path d="m21.5 4.5-19 8 6 2 2 6 4-4 5 4z" /></svg>
             </div>
-            <span>012 723 236</span>
+            <span>+855 93 342 226</span>
           </div>
           <div className="flex items-center gap-1 opacity-90">
             <div className="w-6 h-6 rounded-full bg-[#1877F2] flex items-center justify-center text-[10px] font-bold">f</div>
