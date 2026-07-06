@@ -2,16 +2,20 @@ import { useState } from "react";
 import { upsertUser } from "../db";
 import { getTelegramUser } from "../telegramWebApp";
 import { IconCheck } from "../components/Icons";
+import LocationPicker, { type PickedLocation } from "../components/LocationPicker";
+import type { UserLocation } from "../store";
 
 export default function Login({
   defaultName,
   onSuccess,
 }: {
   defaultName: string;
-  onSuccess: (data: { name: string; phone: string }) => void;
+  onSuccess: (data: { name: string; phone: string; location: UserLocation | null }) => void;
 }) {
   const [name, setName] = useState(defaultName === "USER" ? "" : defaultName);
   const [phone, setPhone] = useState("");
+  const [location, setLocation] = useState<PickedLocation | null>(null);
+  const [showPicker, setShowPicker] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -30,6 +34,10 @@ export default function Login({
       setError("សូមបញ្ចូលលេខទូរស័ព្ទឲ្យបានត្រឹមត្រូវ (៨-១៥ ខ្ទង់)");
       return;
     }
+    if (!location) {
+      setError("សូមជ្រើសរើសទីតាំងរបស់អ្នកពីផែនទី");
+      return;
+    }
     setLoading(true);
     try {
       await upsertUser({
@@ -37,13 +45,20 @@ export default function Login({
         phone: trimmedPhone,
         telegramId: tg ? String(tg.id) : null,
         telegramUsername: tg?.username ?? null,
+        locationLat: location.latitude,
+        locationLng: location.longitude,
+        locationAddress: location.address ?? null,
       });
-      // Persist locally so future opens skip the login screen.
+      const userLoc: UserLocation = {
+        latitude: location.latitude,
+        longitude: location.longitude,
+        address: location.address,
+      };
       localStorage.setItem(
         "nt26.user",
-        JSON.stringify({ name: trimmedName, phone: trimmedPhone })
+        JSON.stringify({ name: trimmedName, phone: trimmedPhone, location: userLoc })
       );
-      onSuccess({ name: trimmedName, phone: trimmedPhone });
+      onSuccess({ name: trimmedName, phone: trimmedPhone, location: userLoc });
     } catch (err) {
       console.error(err);
       setError("ការភ្ជាប់ទៅ server បរាជ័យ។ សូមព្យាយាមម្តងទៀត។");
@@ -52,31 +67,41 @@ export default function Login({
   };
 
   return (
-    <div className="flex flex-col h-full bg-gradient-to-br from-[#148c78] to-[#0f6f61] text-white">
+    <div className="flex flex-col h-full bg-gradient-to-br from-[#148c78] to-[#0f6f61] text-white relative">
+      {showPicker && (
+        <LocationPicker
+          initial={location}
+          onConfirm={(loc) => {
+            setLocation(loc);
+            setShowPicker(false);
+          }}
+          onClose={() => setShowPicker(false)}
+        />
+      )}
+
       {/* Decorative header */}
-      <div className="relative h-64 flex items-end justify-center pb-6 overflow-hidden">
+      <div className="relative h-48 flex items-end justify-center pb-5 overflow-hidden flex-shrink-0">
         <div className="absolute -top-16 -left-16 w-56 h-56 rounded-full bg-white/10" />
         <div className="absolute top-10 -right-20 w-64 h-64 rounded-full bg-white/5" />
-        <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-40 h-40 rounded-full bg-white/10 blur-2xl" />
 
         <div className="relative text-center">
-          <div className="w-20 h-20 mx-auto rounded-full bg-white/95 flex items-center justify-center text-4xl shadow-xl">
+          <div className="w-16 h-16 mx-auto rounded-full bg-white/95 flex items-center justify-center text-3xl shadow-xl">
             ☕
           </div>
-          <div className="mt-4 text-3xl font-black tracking-wide">NT26 COFFEE</div>
-          <div className="mt-1 text-sm text-white/80">សូមស្វាគមន៍ 🙏</div>
+          <div className="mt-3 text-2xl font-black tracking-wide">NT26 COFFEE</div>
+          <div className="mt-0.5 text-xs text-white/80">សូមស្វាគមន៍ 🙏</div>
         </div>
       </div>
 
       {/* Form card */}
-      <div className="flex-1 bg-white rounded-t-3xl px-6 pt-8 pb-6 text-gray-800 -mt-6 relative">
-        <h2 className="text-xl font-bold text-gray-800">ចូលប្រើប្រាស់</h2>
-        <p className="text-sm text-gray-500 mt-1">
-          សូមបញ្ចូលឈ្មោះ និងលេខទូរស័ព្ទរបស់អ្នកមុនចាប់ផ្ដើម
+      <div className="flex-1 bg-white rounded-t-3xl px-6 pt-6 pb-6 text-gray-800 -mt-4 relative overflow-y-auto no-scrollbar">
+        <h2 className="text-lg font-bold text-gray-800">ចូលប្រើប្រាស់</h2>
+        <p className="text-xs text-gray-500 mt-1">
+          សូមបញ្ចូលឈ្មោះ លេខទូរស័ព្ទ និងជ្រើសរើសទីតាំងរបស់អ្នក
         </p>
 
         {tg && (
-          <div className="mt-4 bg-[#26A5E4]/10 border border-[#26A5E4]/30 rounded-xl px-3 py-2 flex items-center gap-2">
+          <div className="mt-3 bg-[#26A5E4]/10 border border-[#26A5E4]/30 rounded-xl px-3 py-2 flex items-center gap-2">
             {tg.photo_url ? (
               <img
                 src={tg.photo_url}
@@ -103,7 +128,7 @@ export default function Login({
           </div>
         )}
 
-        <form onSubmit={submit} className="mt-5 space-y-4">
+        <form onSubmit={submit} className="mt-4 space-y-3.5">
           <div>
             <label className="text-xs text-gray-600 font-medium">
               ឈ្មោះ <span className="text-red-500">*</span>
@@ -113,7 +138,6 @@ export default function Login({
               onChange={(e) => setName(e.target.value)}
               placeholder="ឧ. Sok Pheng"
               className="mt-1 w-full bg-[#f2f7f5] rounded-xl px-4 py-3 text-sm outline-none border border-transparent focus:border-[#148c78]"
-              autoFocus
             />
           </div>
           <div>
@@ -127,6 +151,47 @@ export default function Login({
               inputMode="tel"
               className="mt-1 w-full bg-[#f2f7f5] rounded-xl px-4 py-3 text-sm outline-none border border-transparent focus:border-[#148c78]"
             />
+          </div>
+
+          {/* Location field */}
+          <div>
+            <label className="text-xs text-gray-600 font-medium">
+              ទីតាំងរបស់អ្នក <span className="text-red-500">*</span>
+            </label>
+            <button
+              type="button"
+              onClick={() => setShowPicker(true)}
+              className={`mt-1 w-full rounded-xl px-4 py-3 text-sm text-left border transition ${
+                location
+                  ? "bg-[#148c78]/5 border-[#148c78]/40"
+                  : "bg-[#f2f7f5] border-transparent hover:border-[#148c78]/30"
+              }`}
+            >
+              {location ? (
+                <div className="flex items-start gap-2">
+                  <span className="text-lg leading-none">📍</span>
+                  <div className="min-w-0 flex-1">
+                    <div className="text-xs font-mono text-gray-700">
+                      {location.latitude.toFixed(6)}, {location.longitude.toFixed(6)}
+                    </div>
+                    {location.address && (
+                      <div className="text-[11px] text-gray-500 truncate mt-0.5">
+                        {location.address}
+                      </div>
+                    )}
+                    <div className="text-[11px] text-[#148c78] mt-0.5 font-medium">
+                      ចុចដើម្បីផ្លាស់ប្ដូរ
+                    </div>
+                  </div>
+                  <IconCheck className="w-4 h-4 text-[#148c78] flex-shrink-0 mt-0.5" />
+                </div>
+              ) : (
+                <div className="flex items-center gap-2 text-gray-500">
+                  <span className="text-lg">🗺️</span>
+                  ជ្រើសរើសទីតាំងពីផែនទី
+                </div>
+              )}
+            </button>
           </div>
 
           {error && (
@@ -153,7 +218,7 @@ export default function Login({
             )}
           </button>
 
-          <p className="text-[11px] text-center text-gray-400 mt-2">
+          <p className="text-[11px] text-center text-gray-400">
             ដោយចុច "ចូលចាប់ផ្ដើម" អ្នកយល់ព្រមឲ្យយើងរក្សាទុកព័ត៌មានរបស់អ្នក
           </p>
         </form>

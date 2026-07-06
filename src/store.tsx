@@ -28,11 +28,19 @@ type Ctx = {
   tgUser: TgUser | null;
   isFromTelegram: boolean;
   isLoggedIn: boolean;
-  login: (data: { name: string; phone: string }) => void;
+  login: (data: { name: string; phone: string; location?: UserLocation | null }) => void;
   logout: () => void;
+  userLocation: UserLocation | null;
+  setUserLocation: (loc: UserLocation | null) => void;
 };
 
-type StoredUser = { name: string; phone: string };
+export type UserLocation = {
+  latitude: number;
+  longitude: number;
+  address?: string;
+};
+
+type StoredUser = { name: string; phone: string; location?: UserLocation | null };
 function loadStoredUser(): StoredUser | null {
   try {
     const raw = localStorage.getItem("nt26.user");
@@ -62,16 +70,35 @@ export function CartProvider({ children }: { children: ReactNode }) {
   const [customerPhone, setCustomerPhone] = useState(stored?.phone || "");
   const [points, setPoints] = useState(0);
   const [isLoggedIn, setIsLoggedIn] = useState<boolean>(!!stored);
+  const [userLocation, setUserLocationState] = useState<UserLocation | null>(
+    stored?.location ?? null
+  );
 
-  const login = (data: { name: string; phone: string }) => {
+  const persist = (partial: Partial<StoredUser>) => {
+    try {
+      const current = loadStoredUser() ?? { name: customerName, phone: customerPhone };
+      localStorage.setItem("nt26.user", JSON.stringify({ ...current, ...partial }));
+    } catch {
+      /* ignore */
+    }
+  };
+
+  const setUserLocation = (loc: UserLocation | null) => {
+    setUserLocationState(loc);
+    persist({ location: loc });
+  };
+
+  const login = (data: { name: string; phone: string; location?: UserLocation | null }) => {
     setCustomerName(data.name);
     setCustomerPhone(data.phone);
+    if (data.location !== undefined) setUserLocationState(data.location);
     setIsLoggedIn(true);
   };
   const logout = () => {
     localStorage.removeItem("nt26.user");
     setIsLoggedIn(false);
     setCustomerPhone("");
+    setUserLocationState(null);
   };
 
   // If Telegram becomes available slightly after mount (script race), pick it up.
@@ -145,6 +172,8 @@ export function CartProvider({ children }: { children: ReactNode }) {
         isLoggedIn,
         login,
         logout,
+        userLocation,
+        setUserLocation,
       }}
     >
       {children}

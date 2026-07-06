@@ -13,6 +13,9 @@ export type DbUser = {
   phone: string;
   telegram_id: string | null;
   telegram_username: string | null;
+  location_lat: number | null;
+  location_lng: number | null;
+  location_address: string | null;
   created_at: string;
   last_login_at: string;
 };
@@ -30,10 +33,16 @@ function ensureSchema(): Promise<void> {
         phone TEXT NOT NULL UNIQUE,
         telegram_id TEXT,
         telegram_username TEXT,
+        location_lat DOUBLE PRECISION,
+        location_lng DOUBLE PRECISION,
+        location_address TEXT,
         created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
         last_login_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
       )
     `;
+    await sql`ALTER TABLE users ADD COLUMN IF NOT EXISTS location_lat DOUBLE PRECISION`;
+    await sql`ALTER TABLE users ADD COLUMN IF NOT EXISTS location_lng DOUBLE PRECISION`;
+    await sql`ALTER TABLE users ADD COLUMN IF NOT EXISTS location_address TEXT`;
     // Best-effort orders table for future logging
     await sql`
       CREATE TABLE IF NOT EXISTS orders (
@@ -67,15 +76,30 @@ export async function upsertUser(input: {
   phone: string;
   telegramId?: string | null;
   telegramUsername?: string | null;
+  locationLat?: number | null;
+  locationLng?: number | null;
+  locationAddress?: string | null;
 }): Promise<DbUser> {
   await ensureSchema();
   const rows = (await sql`
-    INSERT INTO users (name, phone, telegram_id, telegram_username, last_login_at)
-    VALUES (${input.name}, ${input.phone}, ${input.telegramId ?? null}, ${input.telegramUsername ?? null}, NOW())
+    INSERT INTO users (name, phone, telegram_id, telegram_username, location_lat, location_lng, location_address, last_login_at)
+    VALUES (
+      ${input.name},
+      ${input.phone},
+      ${input.telegramId ?? null},
+      ${input.telegramUsername ?? null},
+      ${input.locationLat ?? null},
+      ${input.locationLng ?? null},
+      ${input.locationAddress ?? null},
+      NOW()
+    )
     ON CONFLICT (phone) DO UPDATE
       SET name = EXCLUDED.name,
           telegram_id = COALESCE(EXCLUDED.telegram_id, users.telegram_id),
           telegram_username = COALESCE(EXCLUDED.telegram_username, users.telegram_username),
+          location_lat = COALESCE(EXCLUDED.location_lat, users.location_lat),
+          location_lng = COALESCE(EXCLUDED.location_lng, users.location_lng),
+          location_address = COALESCE(EXCLUDED.location_address, users.location_address),
           last_login_at = NOW()
     RETURNING *
   `) as unknown as DbUser[];

@@ -33,13 +33,20 @@ export default function Checkout({
   }) => void;
   onEditProfile: () => void;
 }) {
-  const { totalPrice, customerName, customerPhone, points } = useCart();
+  const { totalPrice, customerName, customerPhone, points, userLocation } = useCart();
   const [method, setMethod] = useState<"pickup" | "delivery">("delivery");
   const [usePoints, setUsePoints] = useState(false);
   const [duration, setDuration] = useState<string>("normal");
   const [invoice, setInvoice] = useState("");
   const [note, setNote] = useState("");
   const [loc, setLoc] = useState<LocState>({ kind: "idle" });
+
+  const useSavedLocation = () => {
+    if (!userLocation) return false;
+    const l = { latitude: userLocation.latitude, longitude: userLocation.longitude };
+    setLoc({ kind: "ok", loc: l, distance: distanceMeters(l, SHOP_LOCATION) });
+    return true;
+  };
 
   const fetchLocation = () => {
     setLoc({ kind: "requesting" });
@@ -52,6 +59,8 @@ export default function Checkout({
         });
       })
       .catch((err) => {
+        // Fallback: use the location saved at registration.
+        if (useSavedLocation()) return;
         const msg = String(err?.message || err || "");
         if (msg.toLowerCase().includes("denied") || err?.code === 1) {
           setLoc({ kind: "denied" });
@@ -165,12 +174,22 @@ export default function Checkout({
                 <div className="mt-2 text-[11px] text-amber-700 bg-amber-50 border border-amber-200 rounded-lg px-3 py-2">
                   ⚠️ ការចូលដំណើរការទីតាំងត្រូវបានបដិសេធ។ សូមអនុញ្ញាតដើម្បីបញ្ជាទិញដឹកជញ្ជូន។
                 </div>
-                <button
-                  onClick={fetchLocation}
-                  className="mt-2 text-xs text-[#148c78] font-medium underline"
-                >
-                  ព្យាយាមម្ដងទៀត
-                </button>
+                <div className="mt-2 flex items-center gap-3">
+                  <button
+                    onClick={fetchLocation}
+                    className="text-xs text-[#148c78] font-medium underline"
+                  >
+                    ព្យាយាមម្ដងទៀត
+                  </button>
+                  {userLocation && (
+                    <button
+                      onClick={useSavedLocation}
+                      className="text-xs text-[#148c78] font-medium underline"
+                    >
+                      📍 ប្រើទីតាំងដែលបានរក្សាទុក
+                    </button>
+                  )}
+                </div>
               </>
             )}
 
