@@ -10,6 +10,18 @@ export type TgUser = {
   photo_url?: string;
 };
 
+export type TgLocation = { latitude: number; longitude: number };
+
+type TgLocationManager = {
+  isInited: boolean;
+  isLocationAvailable: boolean;
+  isAccessRequested: boolean;
+  isAccessGranted: boolean;
+  init: (cb?: () => void) => void;
+  getLocation: (cb: (loc: TgLocation | null) => void) => void;
+  openSettings?: () => void;
+};
+
 type TgWebApp = {
   initData: string;
   initDataUnsafe: {
@@ -20,8 +32,10 @@ type TgWebApp = {
   };
   ready: () => void;
   expand: () => void;
+  version?: string;
   colorScheme?: "light" | "dark";
   themeParams?: Record<string, string>;
+  LocationManager?: TgLocationManager;
 };
 
 declare global {
@@ -65,4 +79,73 @@ export function initTelegram(): TgUser | null {
     /* noop */
   }
   return wa.initDataUnsafe?.user ?? null;
+}
+
+/**
+ * Request the user's current geolocation.
+ * Tries Telegram's LocationManager first (available in Bot API 8.0+),
+ * then falls back to the browser Geolocation API.
+ */
+export function requestLocation(): Promise<TgLocation> {
+  return new Promise((resolve, reject) => {
+    const wa = getTelegramWebApp();
+    const lm = wa?.LocationManager;
+
+    const useBrowser = () => {
+      if (!("geolocation" in navigator)) {
+        reject(new Error("Geolocation not supported"));
+        return;
+      }
+      navigator.geolocation.getCurrentPosition(
+        (pos) =>
+          resolve({
+            latitude: pos.coords.latitude,
+            longitude: pos.coords.longitude,
+          }),
+        (err) => reject(err),
+        { enableHighAccuracy: true, timeout: 15000, maximumAge: 30000 }
+      );
+    };
+
+    if (lm && typeof lm.init === "function") {
+      try {
+        lm.init(() => {
+          if (!lm.isLocationAvailable) {
+            useBrowser();
+            return;
+          }
+          lm.getLocation((loc) => {
+            if (loc) resolve(loc);
+            else useBrowser();
+          });
+        });
+        return;
+      } catch {
+        // fall through
+      }
+    }
+    useBrowser();
+  });
+}
+
+/** Haversine distance in metres between two lat/lng points. */
+export function distanceMeters(
+  a: { latitude: number; longitude: number },
+  b: { latitude: number; longitude: number }
+): number {
+  const R = 6371000; // Earth radius in metres
+  const toRad = (d: number) => (d * Math.PI) / 180;
+  const dLat = toRad(b.latitude - a.latitude);
+  const dLng = toRad(b.longitude - a.longitude);
+  const lat1 = toRad(a.latitude);
+  const lat2 = toRad(b.latitude);
+  const h =
+    Math.sin(dLat / 2) ** 2 +
+    Math.sin(dLng / 2) ** 2 * Math.cos(lat1) * Math.cos(lat2);
+  return 2 * R * Math.asin(Math.sqrt(h));
+}
+
+export function formatDistance(meters: number): string {
+  if (meters < 1000) return `${Math.round(meters)}m`;
+  return `${(meters / 1000).toFixed(1)}km`;
 }

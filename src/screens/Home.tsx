@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { featuredProducts, useCart } from "../store";
 import { formatPrice } from "../data";
 import {
@@ -8,6 +9,7 @@ import {
   IconGift,
   IconHome,
 } from "../components/Icons";
+import ShopPopup from "../components/ShopPopup";
 
 export default function Home({
   onNavigate,
@@ -17,17 +19,17 @@ export default function Home({
   onOpenProduct: (id: string) => void;
 }) {
   const { customerName, points, totalItems, tgUser, isFromTelegram, logout } = useCart();
+  const [showShopPopup, setShowShopPopup] = useState(false);
 
   return (
     <div className="flex flex-col h-full">
+      {showShopPopup && <ShopPopup onClose={() => setShowShopPopup(false)} />}
       {/* Hero banner */}
       <div className="relative hero-brush">
         {/* top bar */}
         <div className="flex items-center justify-end gap-2 px-4 pt-4 pb-2">
           <button
-            onClick={() => {
-              if (confirm("ចេញពីគណនី?")) logout();
-            }}
+            onClick={() => setShowShopPopup(true)}
             className="bg-white rounded-full pl-3 pr-2 py-1 flex items-center gap-1 text-sm font-medium text-gray-700 shadow"
           >
             NT26 Coffee
@@ -107,7 +109,7 @@ export default function Home({
                   👩
                 </div>
               )}
-              <div className="min-w-0">
+              <div className="min-w-0 flex-1">
                 <div className="text-sm text-gray-600 font-medium flex items-center gap-1">
                   សូមស្វាគមន៍ 🙏
                   {isFromTelegram && (
@@ -123,6 +125,19 @@ export default function Home({
                   {customerName}
                 </div>
               </div>
+              <button
+                onClick={() => {
+                  if (confirm("ចេញពីគណនី?")) logout();
+                }}
+                title="Logout"
+                className="text-gray-400 hover:text-red-500 p-1"
+              >
+                <svg viewBox="0 0 24 24" fill="none" className="w-4 h-4" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
+                  <path d="m16 17 5-5-5-5" />
+                  <path d="M21 12H9" />
+                </svg>
+              </button>
             </div>
             <div className="mt-3 relative bg-[#f2f7f5] rounded-full h-8 overflow-hidden">
               <div className="absolute inset-y-0 left-0 w-1/3 bg-[#148c78] rounded-full flex items-center justify-end pr-3 text-white text-xs font-medium">
