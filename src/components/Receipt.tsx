@@ -55,7 +55,7 @@ const Receipt = forwardRef<HTMLDivElement, ReceiptProps>(function Receipt(
           ប្រព័ន្ធហ្គេលបីនស្ថេ គម្រោង៨ ផ្លូវ៨០២ ផ្ទះលេខ១០
         </div>
         <div style={{ fontSize: 11, color: "#444", marginTop: 2 }}>
-          Tel: +855 93 342 226
+          Tel: 012 723 236
         </div>
       </div>
 
