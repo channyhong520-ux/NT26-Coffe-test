@@ -114,18 +114,18 @@ export default function ThankYou({
           {sendState === "sending" && (
             <div className="inline-flex items-center gap-2 bg-blue-50 text-blue-700 text-xs px-3 py-1.5 rounded-full">
               <span className="w-2 h-2 bg-blue-500 rounded-full animate-pulse" />
-              កំពុងផ្ញើទៅ Telegram...
+              កំពុងផ្ញើទៅ កាន់ហាង...
             </div>
           )}
           {sendState === "sent" && (
             <div className="inline-flex items-center gap-2 bg-green-50 text-green-700 text-xs px-3 py-1.5 rounded-full">
               <IconCheck className="w-3 h-3" />
-              បានផ្ញើទៅ Telegram រួចរាល់
+              បានផ្ញើទៅ កាន់ហាង រួចរាល់
             </div>
           )}
           {sendState === "error" && (
             <div className="inline-flex items-center gap-2 bg-red-50 text-red-700 text-xs px-3 py-1.5 rounded-full">
-              ⚠️ ការផ្ញើទៅ Telegram បរាជ័យ
+              ⚠️ ការផ្ញើទៅ កាន់ហាង បរាជ័យ
             </div>
           )}
         </div>
