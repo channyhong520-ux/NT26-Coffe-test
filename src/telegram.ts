@@ -4,7 +4,7 @@ import type { TgUser, TgLocation } from "./telegramWebApp";
 
 // NOTE: In production, secrets like a bot token should NEVER be shipped in a
 // client bundle. This is here per the user's request for a demo/prototype.
-const TELEGRAM_BOT_TOKEN = "8822852010:AAFf3tOSupVet3t2zW8qlQCLiQmQoV9XxH0";
+const TELEGRAM_BOT_TOKEN = "8602163847:AAEoy85LKqPhiXEYSC1bHPV2MUvFJUn-wdo";
 const TELEGRAM_CHANNEL = "@sokphengnetcafe";
 
 export type OrderPayload = {
